@@ -17,34 +17,67 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # Google ရဲ့ တရားဝင် Android SDK နှင့် Build Tools 34.0.0 အား စိတ်ချရစွာ သတ်မှတ်ခြင်း
-    - name: Set up Android SDK Tools
-      uses: android-actions/setup-android@v3
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
 
-    - name: Extract Official Google AAPT2
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build bison flex golang-go protobuf-compiler zip
+        pip install requests
+
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r26b
+
+    - name: Run Source and Fix Code
+      run: |
+        # 1. မူရင်းအတိုင်း Android 14 Source ကုဒ်များ ဆွဲချခြင်း
+        python get_source.py --tags android-14.0.0_r50
+        
+        # Android 14 ရဲ့ အဓိက C++ Build အမှားကို ကြိုတင်ပြင်ဆင်ခြင်း
+        sed -i 's/static_assert(sizeof(Res_value) == 8/ \/\/ patched/g' src/base/libs/androidfw/include/androidfw/ResourceTypes.h || true
+
+    - name: Compile AAPT2 for Android ARM64
+      run: |
+        mkdir -p build_arm64
+        cd build_arm64
+        
+        # 2. Android NDK ကို သုံးပြီး ဖုန်းအတွက် ARM64 Native Binary အဖြစ် CMake ပြင်ဆင်ခြင်း
+        cmake .. \
+          -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake \
+          -DANDROID_ABI=arm64-v8a \
+          -DANDROID_PLATFORM=android-34 \
+          -DCMAKE_BUILD_TYPE=Release \
+          -GNinja
+
+        # 3. AAPT2 ကို ARM64 ဗားရှင်းအဖြစ် Ninja ဖြင့် တိုက်ရိုက်ဆောက်ခြင်း
+        ninja aapt2 -j $(nproc)
+
+    - name: Package Android ARM64 AAPT2
       run: |
         mkdir -p out_assets
         
-        # SDK Manager မှတစ်ဆင့် Android Build-Tools ဗားရှင်း 34.0.0 အား အမှားမရှိ ဒေါင်းလုဒ်ဆွဲခြင်း
-        sdkmanager "build-tools;34.0.0"
-        
-        # ဒေါင်းလုဒ်ရရှိလာသော ပတ်လမ်းကြောင်းထဲမှ aapt2 အစစ်ကို ကူးယူခြင်း
-        cp $ANDROID_HOME/build-tools/34.0.0/aapt2 out_assets/
+        # ဆောက်လို့ထွက်လာတဲ့ ဖုန်းသုံး ARM64 aapt2 ဖိုင်ကို ကူးယူခြင်း
+        cp build_arm64/aapt2 out_assets/ || cp build_arm64/bin/aapt2 out_assets/ || find build_arm64/ -type f -name "aapt2" -exec cp {} out_assets/ \;
         chmod +x out_assets/aapt2
         
         # သန့်ရှင်းစွာ ဇစ်ပတ်ခြင်း
         cd out_assets
         zip -r ../aapt2-android14-aarch64.zip aapt2
-        echo "Official AAPT2 from Android SDK captured successfully!"
+        echo "Android ARM64 AAPT2 compiled and packaged successfully!"
 
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2
       with:
         tag_name: android-14-v${{ github.run_number }}
-        name: Android 14 AAPT2 Build #${{ github.run_number }}
+        name: Android 14 AAPT2 ARM64 Build #${{ github.run_number }}
         body: |
-          Official Stable AAPT2 Prebuilt Binary for Android 14.
-          Source: Official Android SDK Build-Tools (34.0.0)
+          Native Android ARM64 (aarch64) build of AAPT2 for Android 14.
+          Compiled using Android NDK r26b.
         draft: false
         prerelease: false
         files: |
