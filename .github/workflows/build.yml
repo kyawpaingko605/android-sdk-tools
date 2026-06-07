@@ -1,0 +1,37 @@
+name: Build Android SDK Tools
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build
+
+    - name: Setup Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r26b
+
+    - name: Run Build Script
+      run: |
+        python get_source.py
+        # လိုအပ်ပါက build.py ကို target architecture အလိုက် ဒီနေရာတွင် run နိုင်သည်
+        # python build.py --ndk=$ANDROID_NDK_ROOT --abi=arm64-v8a
