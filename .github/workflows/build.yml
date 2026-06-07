@@ -17,25 +17,25 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Fetch Official Google AAPT2 Binary
+    # Google ရဲ့ တရားဝင် Android SDK နှင့် Build Tools 34.0.0 အား စိတ်ချရစွာ သတ်မှတ်ခြင်း
+    - name: Set up Android SDK Tools
+      uses: android-actions/setup-android@v3
+
+    - name: Extract Official Google AAPT2
       run: |
         mkdir -p out_assets
+        
+        # SDK Manager မှတစ်ဆင့် Android Build-Tools ဗားရှင်း 34.0.0 အား အမှားမရှိ ဒေါင်းလုဒ်ဆွဲခြင်း
+        sdkmanager "build-tools;34.0.0"
+        
+        # ဒေါင်းလုဒ်ရရှိလာသော ပတ်လမ်းကြောင်းထဲမှ aapt2 အစစ်ကို ကူးယူခြင်း
+        cp $ANDROID_HOME/build-tools/34.0.0/aapt2 out_assets/
+        chmod +x out_assets/aapt2
+        
+        # သန့်ရှင်းစွာ ဇစ်ပတ်ခြင်း
         cd out_assets
-        
-        # Google ရဲ့ တရားဝင် Android Build Tools အသေချာဆုံး ကွန်ရက်လမ်းကြောင်း
-        curl --location --fail -O https://dl.google.com/android/repository/build-tools_r34.0.0-linux.zip
-        
-        # zip ထဲမှ aapt2 executable အစစ်ကိုသာ သီးသန့်ဆွဲထုတ်ခြင်း
-        unzip build-tools_r34.0.0-linux.zip android-14/aapt2
-        mv android-14/aapt2 .
-        chmod +x aapt2
-        
-        # မလိုအပ်သော ယာယီဖိုင်များနှင့် folder များကို အကုန်ရှင်းလင်းခြင်း
-        rm -rf build-tools_r34.0.0-linux.zip android-14
-        
-        # သန့်ရှင်းစွာ ဇစ်ပြန်ပတ်ခြင်း
         zip -r ../aapt2-android14-aarch64.zip aapt2
-        echo "AAPT2 from Official Google SDK captured successfully!"
+        echo "Official AAPT2 from Android SDK captured successfully!"
 
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2
@@ -44,7 +44,7 @@ jobs:
         name: Android 14 AAPT2 Build #${{ github.run_number }}
         body: |
           Official Stable AAPT2 Prebuilt Binary for Android 14.
-          Source: Google Android SDK Repository (Build Tools 34.0.0)
+          Source: Official Android SDK Build-Tools (34.0.0)
         draft: false
         prerelease: false
         files: |
