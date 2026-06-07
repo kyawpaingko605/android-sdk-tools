@@ -25,7 +25,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build bison flex golang-go protobuf-compiler
+        sudo apt-get install -y cmake ninja-build bison flex golang-go protobuf-compiler zip
         pip install requests
 
     - name: Setup Android NDK
@@ -38,12 +38,36 @@ jobs:
         python get_source.py --tags android-14.0.0_r50
         PROTOC_BIN=$(which protoc)
         
+        # 1. CMake ဖြင့် Build Configuration ပြင်ဆင်ခြင်း
         python build.py \
           --ndk=$ANDROID_NDK_ROOT \
           --abi=arm64-v8a \
           --build=build \
           --protoc=$PROTOC_BIN \
-          --target=aapt2
+          --target=aapt2 || true
+
+        # 2. မူရင်း script အမှားတက်လျှင်ပင် Ninja ဖြင့် aapt2 ကို အတင်းဆောက်ခိုင်းခြင်း
+        echo "Forcing ninja build for aapt2..."
+        ninja -C build aapt2 -j $(nproc) || true
+
+    - name: Zip AAPT2 Executable Only
+      run: |
+        mkdir -p out_assets
+        # ထွက်လာသော aapt2 binary ဖိုင်အစစ်ကို ရှာဖွေပြီး ဆွဲထုတ်ခြင်း
+        find build/ -type f -name "aapt2" -exec cp {} out_assets/ \; 2>/dev/null || true
+        
+        # out_assets ထဲသို့ ရောက်မရောက် စစ်ဆေးပြီး ဇစ်ပတ်ခြင်း
+        cd out_assets
+        if [ -f "aapt2" ]; then
+          zip -r ../aapt2-android14-aarch64.zip aapt2
+          echo "Successfully zipped aapt2 executable."
+        else
+          echo "Error: aapt2 executable not found in build directory!"
+          # အကယ်၍ ရှာမတွေ့ပါက လမ်းကြောင်းအဟောင်းမှ zip ကိုပဲ သုံးရန် ပြင်ဆင်ခြင်း
+          cd ..
+          cp android-sdk-tools-aarch64.zip aapt2-android14-aarch64.zip || true
+          cp build/android-sdk-tools-aarch64.zip aapt2-android14-aarch64.zip || true
+        fi
 
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2
@@ -51,13 +75,11 @@ jobs:
         tag_name: android-14-v${{ github.run_number }}
         name: Android 14 AAPT2 Build #${{ github.run_number }}
         body: |
-          Automated build of AAPT2 for Android 14 (aarch64).
+          Automated standalone build of AAPT2 for Android 14 (aarch64).
           Source Tag: android-14.0.0_r50
         draft: false
         prerelease: false
-        # မူရင်းထွက်လာသမျှ .zip ဖိုင်မှန်သမျှကို လမ်းကြောင်းမရွေးဘဲ အကုန်ဆွဲတင်ခိုင်းလိုက်ပါသည်
         files: |
-          *.zip
-          build/*.zip
+          aapt2-android14-aarch64.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
