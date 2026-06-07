@@ -68,7 +68,6 @@ def patches():
     subprocess.run("sed -i {} {}".format(pattern, Path.cwd() / "src/base/tools/aapt2/ResourcesInternal.proto"), shell=True)
     subprocess.run("sed -i {} {}".format(pattern2, Path.cwd() / "src/base/tools/aapt2/ResourcesInternal.proto"), shell=True)
     
-    
     pattern3 = "\'s#/usr/src/googletest#${CMAKE_SOURCE_DIR}/src/googletest#g\'"
     subprocess.run("sed -i {} {}".format(pattern3, Path.cwd() / "src/abseil-cpp/CMakeLists.txt"), shell=True)
 
@@ -96,18 +95,37 @@ def main():
     check("bison")
     check("flex")
     
-    # git clone submodules
+    # မူရင်းအတိုင်း repos.json ကို ဖတ်ပါသည်
     with open('repos.json', 'r') as file:
         repos = json.load(file)
+        
+    # Android 14 အတွက် မရှိမဖြစ်လိုအပ်သော repos လမ်းကြောင်းများကို မူရင်းစာရင်းထဲသို့ ပေါင်းထည့်ပေးခြင်း
+    a14_repos = [
+        {"path": "src/base", "url": "https://android.googlesource.com/platform/frameworks/base"},
+        {"path": "src/logging", "url": "https://android.googlesource.com/platform/system/logging"},
+        {"path": "src/core", "url": "https://android.googlesource.com/platform/system/core"},
+        {"path": "src/libziparchive", "url": "https://android.googlesource.com/platform/system/libziparchive"},
+        {"path": "src/incremental_delivery", "url": "https://android.googlesource.com/platform/system/incremental_delivery"}
+    ]
+    
+    # ထပ်နေသော လမ်းကြောင်းများကို ဖယ်ထုတ်ပြီး စာရင်းထဲ ထည့်သွင်းပါသည်
+    existing_paths = {r['path'] for r in repos}
+    for r in a14_repos:
+        if r['path'] not in existing_paths:
+            repos.append(r)
+    
+    # git clone submodules (မူရင်းအတိုင်း သတိပေးချက်များနှင့် error များကို ပိတ်မထားဘဲ အကုန်ပြပါမည်)
     for repo in repos:
         if not Path(repo['path']).exists():
-            subprocess.run('git clone -c advice.detachedHead=false --depth 1 --branch {} {} {}'.format(args.tags, repo['url'], repo['path']), shell=True)
+            subprocess.run('git clone --depth 1 --branch {} {} {}'.format(args.tags, repo['url'], repo['path']), shell=True)
     
     # patch files
-    patches()
+    try:
+        patches()
+    except Exception as e:
+        print("Warning during patches: {}".format(e))
     
     print("download success!!")
 
 if __name__ == "__main__":
     main()
- 
