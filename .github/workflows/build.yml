@@ -34,8 +34,9 @@ jobs:
     - name: Run Build Script
       run: |
         python get_source.py --tags android-14.0.0_r50
+        # aapt2 ဖိုင် အမှန်တကယ်ထွက်လာစေရန် ဤနေရာတွင် မပျက်မကွက် Build ခိုင်းရပါမည်
+        python build.py --ndk=$ANDROID_NDK_ROOT --abi=arm64-v8a
 
-    # aapt2 ဖိုင်ကို ဒေါင်းလုဒ်ဆွဲနိုင်ရန် Artifact အဖြစ် ထုတ်ပေးမည့်အဆင့်
     - name: Upload AAPT2 Executable
       uses: actions/upload-artifact@v4
       with:
