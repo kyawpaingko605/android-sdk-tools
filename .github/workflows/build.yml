@@ -42,12 +42,14 @@ jobs:
           --protoc=$PROTOC_BIN \
           --target=aapt2
 
+    - name: Archive All AAPT2 Files
+      run: |
+        mkdir -p output_bin
+        # Project တစ်ခုလုံးထဲမှာ ထွက်လာသမျှ aapt2 ဖိုင်အားလုံးကို ရှာပြီး output_bin ထဲသို့ စုစည်းသိမ်းဆည်းလိုက်ပါသည်
+        find . -name "aapt2" -type f -exec cp {} output_bin/ \; 2>/dev/null || true
+
     - name: Upload AAPT2 Executable
       uses: actions/upload-artifact@v4
       with:
         name: aapt2-android14
-        # src/ folder ကို ချန်လှပ်ပြီး တကယ့်အလုပ်လုပ်မည့် build ထွက်လာသော ဖိုင်များကိုသာ သီးသန့်သိမ်းခိုင်းထားပါသည်
-        path: |
-          build/build-tools/aapt2
-          build/aarch64/build-tools/aapt2
-          out/host/linux-x86/bin/aapt2
+        path: output_bin/
