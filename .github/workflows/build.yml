@@ -23,7 +23,6 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        # Error မတက်စေရန် protobuf-compiler (protoc) ကို စနစ်ထဲကနေ တိုက်ရိုက် သွင်းလိုက်ပါသည်
         sudo apt-get install -y cmake ninja-build bison flex golang-go protobuf-compiler
         pip install requests
 
@@ -34,18 +33,12 @@ jobs:
 
     - name: Run Build Script
       run: |
-        # ၁။ Android 14 Source Code များကို ဆွဲယူခြင်း
         python get_source.py --tags android-14.0.0_r50
-        
-        # ၂။ စနစ်ထဲတွင် အဆင်သင့်ပါသော protoc လမ်းကြောင်းကို ရှာဖွေခြင်း
         PROTOC_BIN=$(which protoc)
-        echo "Using system protoc at: $PROTOC_BIN"
         
-        # ၃။ NDK ကိုအသုံးပြုပြီး aapt2 အား Android Architecture အတွက် တည်ဆောက်ခြင်း
         python build.py \
           --ndk=$ANDROID_NDK_ROOT \
           --abi=arm64-v8a \
-          --build=build/aarch64 \
           --protoc=$PROTOC_BIN \
           --target=aapt2
 
@@ -53,6 +46,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: aapt2-android14
+        # ဖိုင်ထွက်လာသမျှ နေရာအနှံ့က aapt2 တွေကို အကုန်ရှာပြီး သိမ်းခိုင်းလိုက်ပါသည်
         path: |
-          build/aarch64/build-tools/aapt2
-          pack/
+          build/**/aapt2
+          out/**/aapt2
