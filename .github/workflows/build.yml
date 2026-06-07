@@ -23,7 +23,8 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build bison flex golang-go
+        # Error မတက်စေရန် protobuf-compiler (protoc) ကို စနစ်ထဲကနေ တိုက်ရိုက် သွင်းလိုက်ပါသည်
+        sudo apt-get install -y cmake ninja-build bison flex golang-go protobuf-compiler
         pip install requests
 
     - name: Setup Android NDK
@@ -36,18 +37,16 @@ jobs:
         # ၁။ Android 14 Source Code များကို ဆွဲယူခြင်း
         python get_source.py --tags android-14.0.0_r50
         
-        # ၂။ aapt2 ကို build ရန် လိုအပ်သော Host protoc compiler ကို အရင်ဆောက်ခြင်း
-        cd src/protobuf && mkdir build && cd build
-        cmake -GNinja -Dprotobuf_BUILD_TESTS=OFF ..
-        ninja protoc
-        cd ../../..
+        # ၂။ စနစ်ထဲတွင် အဆင်သင့်ပါသော protoc လမ်းကြောင်းကို ရှာဖွေခြင်း
+        PROTOC_BIN=$(which protoc)
+        echo "Using system protoc at: $PROTOC_BIN"
         
-        # ၃။ NDK ကိုအသုံးပြုပြီး aapt2 အား Android Architecture (arm64-v8a) အတွက် တည်ဆောက်ခြင်း
+        # ၃။ NDK ကိုအသုံးပြုပြီး aapt2 အား Android Architecture အတွက် တည်ဆောက်ခြင်း
         python build.py \
           --ndk=$ANDROID_NDK_ROOT \
           --abi=arm64-v8a \
           --build=build/aarch64 \
-          --protoc=$(pwd)/src/protobuf/build/protoc \
+          --protoc=$PROTOC_BIN \
           --target=aapt2
 
     - name: Upload AAPT2 Executable
