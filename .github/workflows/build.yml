@@ -46,7 +46,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: aapt2-android14
-        # ဖိုင်ထွက်လာသမျှ နေရာအနှံ့က aapt2 တွေကို အကုန်ရှာပြီး သိမ်းခိုင်းလိုက်ပါသည်
+        # Folder အားလုံးထဲက ထွက်လာသမျှ aapt2 ဖိုင်အားလုံးကို လိုက်ရှာပြီး သိမ်းခိုင်းထားပါသည်
         path: |
-          build/**/aapt2
-          out/**/aapt2
+          **/aapt2
+          **/aapt2.exe
+          pack/
