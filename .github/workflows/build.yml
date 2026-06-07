@@ -34,3 +34,12 @@ jobs:
     - name: Run Build Script
       run: |
         python get_source.py --tags android-14.0.0_r50
+
+    # aapt2 ဖိုင်ကို ဒေါင်းလုဒ်ဆွဲနိုင်ရန် Artifact အဖြစ် ထုတ်ပေးမည့်အဆင့်
+    - name: Upload AAPT2 Executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: aapt2-android14
+        path: |
+          build/build-tools/aapt2
+          pack/
