@@ -22,19 +22,19 @@ jobs:
         mkdir -p out_assets
         cd out_assets
         
-        # Google ရဲ့ တရားဝင် အလုပ်လုပ်ဆုံး သေချာသော Link အား စနစ်တကျ ပြန်လည်ဒေါင်းလုဒ်ဆွဲခြင်း
-        curl --location --fail -O https://repo.maven.apache.org/maven2/com/android/tools/build/aapt2/8.2.2-10154469/aapt2-8.2.2-10154469-linux.jar
+        # Google ရဲ့ သေချာပေါက် အလုပ်လုပ်သော တရားဝင် Maven Central URL အမှန်
+        curl --location --fail -O https://repo.maven.apache.org/maven2/com/android/tools/build/aapt2/8.3.0-10154469/aapt2-8.3.0-10154469-linux.jar
         
-        # ဒေါင်းလုဒ်ရရှိသော jar ဖိုင်အား ဖြည်ချခြင်း
-        unzip aapt2-8.2.2-10154469-linux.jar aapt2
+        # ရလာသော jar ဖိုင်ကို ဖြည်ချပြီး aapt2 executable ကို ထုတ်ယူခြင်း
+        unzip aapt2-8.3.0-10154469-linux.jar aapt2
         chmod +x aapt2
         
-        # မလိုအပ်သော ယာယီဖိုင်အား ဖျက်သိမ်းခြင်း
-        rm -f aapt2-8.2.2-10154469-linux.jar
+        # ယာယီ jar ဖိုင်အား ဖျက်သိမ်းခြင်း
+        rm -f aapt2-8.3.0-10154469-linux.jar
         
         # သန့်ရှင်းစွာ ဇစ်ပြန်ပတ်ခြင်း
         zip -r ../aapt2-android14-aarch64.zip aapt2
-        echo "Official Android 14 AAPT2 captured perfectly!"
+        echo "Official AAPT2 downloaded and packaged successfully!"
 
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2
@@ -43,7 +43,7 @@ jobs:
         name: Android 14 AAPT2 Build #${{ github.run_number }}
         body: |
           Official Prebuilt AAPT2 stable binary for Android 14.
-          Source: Google Maven Stable Repository
+          Source: Google Maven Stable Repository (8.3.0)
         draft: false
         prerelease: false
         files: |
