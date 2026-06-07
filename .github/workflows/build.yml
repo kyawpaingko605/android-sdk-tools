@@ -36,20 +36,19 @@ jobs:
         python get_source.py --tags android-14.0.0_r50
         PROTOC_BIN=$(which protoc)
         
+        # မူရင်း build.py အတိုင်း အတိအကျ Run ပါသည်
         python build.py \
           --ndk=$ANDROID_NDK_ROOT \
           --abi=arm64-v8a \
+          --build=build \
           --protoc=$PROTOC_BIN \
           --target=aapt2
 
-    - name: Archive All AAPT2 Files
-      run: |
-        mkdir -p output_bin
-        # Project တစ်ခုလုံးထဲမှာ ထွက်လာသမျှ aapt2 ဖိုင်အားလုံးကို ရှာပြီး output_bin ထဲသို့ စုစည်းသိမ်းဆည်းလိုက်ပါသည်
-        find . -name "aapt2" -type f -exec cp {} output_bin/ \; 2>/dev/null || true
-
-    - name: Upload AAPT2 Executable
+    - name: Upload AAPT2 Zip Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: aapt2-android14
-        path: output_bin/
+        name: aapt2-android14-package
+        # build.py မှ ထုတ်ပေးလိုက်သော zip ဖိုင်ကြီးကို တိုက်ရိုက် သိမ်းဆည်းခိုင်းလိုက်ပါသည်
+        path: |
+          android-sdk-tools-aarch64.zip
+          build/android-sdk-tools-aarch64.zip
