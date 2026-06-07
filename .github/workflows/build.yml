@@ -17,24 +17,25 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download Official Google Android 14 AAPT2
+    - name: Fetch Official Google AAPT2 Binary
       run: |
         mkdir -p out_assets
         cd out_assets
         
-        # Google ရဲ့ သေချာပေါက် အလုပ်လုပ်သော တရားဝင် Maven Central URL အမှန်
-        curl --location --fail -O https://repo.maven.apache.org/maven2/com/android/tools/build/aapt2/8.3.0-10154469/aapt2-8.3.0-10154469-linux.jar
+        # Google ရဲ့ တရားဝင် Android Build Tools အသေချာဆုံး ကွန်ရက်လမ်းကြောင်း
+        curl --location --fail -O https://dl.google.com/android/repository/build-tools_r34.0.0-linux.zip
         
-        # ရလာသော jar ဖိုင်ကို ဖြည်ချပြီး aapt2 executable ကို ထုတ်ယူခြင်း
-        unzip aapt2-8.3.0-10154469-linux.jar aapt2
+        # zip ထဲမှ aapt2 executable အစစ်ကိုသာ သီးသန့်ဆွဲထုတ်ခြင်း
+        unzip build-tools_r34.0.0-linux.zip android-14/aapt2
+        mv android-14/aapt2 .
         chmod +x aapt2
         
-        # ယာယီ jar ဖိုင်အား ဖျက်သိမ်းခြင်း
-        rm -f aapt2-8.3.0-10154469-linux.jar
+        # မလိုအပ်သော ယာယီဖိုင်များနှင့် folder များကို အကုန်ရှင်းလင်းခြင်း
+        rm -rf build-tools_r34.0.0-linux.zip android-14
         
         # သန့်ရှင်းစွာ ဇစ်ပြန်ပတ်ခြင်း
         zip -r ../aapt2-android14-aarch64.zip aapt2
-        echo "Official AAPT2 downloaded and packaged successfully!"
+        echo "AAPT2 from Official Google SDK captured successfully!"
 
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2
@@ -42,8 +43,8 @@ jobs:
         tag_name: android-14-v${{ github.run_number }}
         name: Android 14 AAPT2 Build #${{ github.run_number }}
         body: |
-          Official Prebuilt AAPT2 stable binary for Android 14.
-          Source: Google Maven Stable Repository (8.3.0)
+          Official Stable AAPT2 Prebuilt Binary for Android 14.
+          Source: Google Android SDK Repository (Build Tools 34.0.0)
         draft: false
         prerelease: false
         files: |
