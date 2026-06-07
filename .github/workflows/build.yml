@@ -23,7 +23,10 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake ninja-build
+        # get_source.py အတွက် လိုအပ်သော bison, flex, go တို့ကိုပါ တစ်ခါတည်း မြှင့်တင်ပေးထားပါသည်
+        sudo apt-get install -y cmake ninja-build bison flex golang-go
+        # requests module ကို သွင်းပေးရန် ထည့်လိုက်ပါသည်
+        pip install requests
 
     - name: Setup Android NDK
       uses: nttld/setup-ndk@v1
@@ -32,6 +35,5 @@ jobs:
 
     - name: Run Build Script
       run: |
-        python get_source.py
-        # လိုအပ်ပါက build.py ကို target architecture အလိုက် ဒီနေရာတွင် run နိုင်သည်
-        # python build.py --ndk=$ANDROID_NDK_ROOT --abi=arm64-v8a
+        # နောက်ဆုံးထွက် Android 14 Source Code များကို ဆွဲရန် tag မြှင့်ထားပါသည်
+        python get_source.py --tags android-14.0.0_r50
