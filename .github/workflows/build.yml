@@ -23,9 +23,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        # get_source.py အတွက် လိုအပ်သော bison, flex, go တို့ကိုပါ တစ်ခါတည်း မြှင့်တင်ပေးထားပါသည်
         sudo apt-get install -y cmake ninja-build bison flex golang-go
-        # requests module ကို သွင်းပေးရန် ထည့်လိုက်ပါသည်
         pip install requests
 
     - name: Setup Android NDK
@@ -35,5 +33,5 @@ jobs:
 
     - name: Run Build Script
       run: |
-        # နောက်ဆုံးထွက် Android 14 Source Code များကို ဆွဲရန် tag မြှင့်ထားပါသည်
+        # ဤနေရာတွင် နောက်ဆုံးထွက် Android 14 Stable Tag အဖြစ်သို့ တိုက်ရိုက် မြှင့်တင်ပေးထားပါသည်
         python get_source.py --tags android-14.0.0_r50
