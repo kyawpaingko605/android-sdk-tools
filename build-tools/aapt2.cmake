@@ -177,15 +177,6 @@ add_library(libaapt2 STATIC
 target_include_directories(libaapt2 PRIVATE ${INCLUDES})
 target_compile_options(libaapt2 PRIVATE ${COMPILE_FLAGS})
 
-# build the host shared library: aapt2_jni
-#add_library(libaapt2_jni SHARED
-#   ${SRC}/base/tools/aapt2/jni/aapt2_jni.cpp
-#   ${TOOL_SOURCE}
-#   )
-#target_include_directories(libaapt2_jni PRIVATE ${INCLUDES})
-#target_compile_options(libaapt2_jni PRIVATE ${COMPILE_FLAGS})
-#target_link_libraries(libaapt2_jni libaapt2)
-
 # build the executable file aapt2
 add_executable(aapt2
     ${SRC}/base/tools/aapt2/Main.cpp
