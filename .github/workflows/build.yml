@@ -33,5 +33,4 @@ jobs:
 
     - name: Run Build Script
       run: |
-        # ဤနေရာတွင် နောက်ဆုံးထွက် Android 14 Stable Tag အဖြစ်သို့ တိုက်ရိုက် မြှင့်တင်ပေးထားပါသည်
         python get_source.py --tags android-14.0.0_r50
