@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # GitHub Releases ထဲသို့ ဖိုင်လှမ်းတင်ရန် လုပ်ပိုင်ခွင့်ပေးခြင်း
 
     steps:
     - name: Checkout repository
@@ -33,10 +35,10 @@ jobs:
 
     - name: Run Build Script
       run: |
+        # မူရင်း get_source.py အတိုင်း Run ပြီး repos.json မှ အချက်အလက်များကို ဆွဲချပါသည်
         python get_source.py --tags android-14.0.0_r50
         PROTOC_BIN=$(which protoc)
         
-        # မူရင်း build.py အတိုင်း အတိအကျ Run ပါသည်
         python build.py \
           --ndk=$ANDROID_NDK_ROOT \
           --abi=arm64-v8a \
@@ -44,11 +46,23 @@ jobs:
           --protoc=$PROTOC_BIN \
           --target=aapt2
 
-    - name: Upload AAPT2 Zip Artifact
-      uses: actions/upload-artifact@v4
+    - name: Prepare Zip File
+      run: |
+        # ထွက်လာသော zip ဖိုင်ကို ရှင်းလင်းသော အမည်တစ်ခုဖြင့် သတ်မှတ်ပေးခြင်း
+        cp android-sdk-tools-aarch64.zip aapt2-android14-aarch64.zip || true
+        cp build/android-sdk-tools-aarch64.zip aapt2-android14-aarch64.zip || true
+
+    - name: Create GitHub Release and Upload Asset
+      uses: softprops/action-gh-release@v2
       with:
-        name: aapt2-android14-package
-        # build.py မှ ထုတ်ပေးလိုက်သော zip ဖိုင်ကြီးကို တိုက်ရိုက် သိမ်းဆည်းခိုင်းလိုက်ပါသည်
-        path: |
-          android-sdk-tools-aarch64.zip
-          build/android-sdk-tools-aarch64.zip
+        tag_name: android-14-v${{ github.run_number }}
+        name: Android 14 AAPT2 Build #${{ github.run_number }}
+        body: |
+          Automated build of AAPT2 for Android 14 (aarch64).
+          Source Tag: android-14.0.0_r50
+        draft: false
+        prerelease: false
+        files: |
+          aapt2-android14-aarch64.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
