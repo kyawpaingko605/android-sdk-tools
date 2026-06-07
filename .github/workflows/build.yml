@@ -17,61 +17,24 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake ninja-build bison flex golang-go protobuf-compiler zip
-        pip install requests
-
-    - name: Setup Android NDK
-      uses: nttld/setup-ndk@v1
-      with:
-        ndk-version: r26b
-
-    - name: Run Build and Auto-Fix Codes
-      run: |
-        # 1. Source code များ ဆွဲချခြင်း
-        python get_source.py --tags android-14.0.0_r50
-        
-        # 2. Android 14 C++ Code Errors များအား အလိုအလျောက် ပြင်ဆင်ခြင်း (Fixing Errors)
-        echo "Patching Android 14 C++ source codes..."
-        sed -i 's/static_assert(sizeof(Res_value) == 8/ \/\/ patched/g' src/base/libs/androidfw/include/androidfw/ResourceTypes.h || true
-        
-        # 3. CMake Build Configuration ပြင်ဆင်ခြင်း
-        PROTOC_BIN=$(which protoc)
-        python build.py \
-          --ndk=$ANDROID_NDK_ROOT \
-          --abi=arm64-v8a \
-          --build=build \
-          --protoc=$PROTOC_BIN \
-          --target=aapt2 || true
-
-        # 4. Ninja ဖြင့် aapt2 ကို အတင်းအကျပ် အပြီးတိုင် ဆောက်ခိုင်းခြင်း
-        echo "Starting forced compilation..."
-        cd build && ninja aapt2 -j $(nproc) || cd ..
-
-    - name: Package AAPT2 Executable
+    - name: Download Official Google Android 14 AAPT2
       run: |
         mkdir -p out_assets
-        # ထွက်လာသော aapt2 binary ကို ရှာဖွေပြီး ဆွဲထုတ်ခြင်း
-        find build/ -type f -name "aapt2" -exec cp {} out_assets/ \; 2>/dev/null || true
-        
-        # ဖိုင် တကယ်ရှိမရှိ စစ်ဆေးပြီး ဇစ်ပတ်ခြင်း
         cd out_assets
-        if [ -f "aapt2" ]; then
-          chmod +x aapt2
-          zip -r ../aapt2-android14-aarch64.zip aapt2
-          echo "Success: AAPT2 compiled and packed!"
-        else
-          echo "Warning: Standard aapt2 not found, capturing partial outputs..."
-          find ../build -name "*aapt2*" -type f -exec cp {} . \; 2>/dev/null || true
-          zip -r ../aapt2-android14-aarch64.zip .
-        fi
+        
+        # Google ရဲ့ တရားဝင် Maven Repository ဆီမှ Android 14 အစစ် (AAPT2 Version 14.0.0) ကို တိုက်ရိုက်ဆွဲချခြင်း
+        curl -LO https://repo1.maven.org/maven2/com/android/tools/build/aapt2/14.0.0-11244601/aapt2-14.0.0-11244601-linux.jar
+        
+        # jar (zip) ဖိုင်ကို ဖြည်ပြီး aapt2 binary အစစ်ကို ဆွဲထုတ်ခြင်း
+        unzip aapt2-14.0.0-11244601-linux.jar aapt2
+        chmod +x aapt2
+        
+        # မလိုအပ်သော jar ဖိုင်ကို ပြန်ဖျက်ခြင်း
+        rm -f aapt2-14.0.0-11244601-linux.jar
+        
+        # သန့်ရှင်းစွာ ဇစ်ပြန်ပတ်ခြင်း
+        zip -r ../aapt2-android14-aarch64.zip aapt2
+        echo "Official Android 14 AAPT2 successfully captured and packaged!"
 
     - name: Create GitHub Release and Upload Asset
       uses: softprops/action-gh-release@v2
@@ -79,8 +42,8 @@ jobs:
         tag_name: android-14-v${{ github.run_number }}
         name: Android 14 AAPT2 Build #${{ github.run_number }}
         body: |
-          Automated stable build of AAPT2 for Android 14 (aarch64).
-          Source Tag: android-14.0.0_r50
+          Official Prebuilt AAPT2 stable binary for Android 14.
+          Source: Google Maven Repository (14.0.0-11244601)
         draft: false
         prerelease: false
         files: |
