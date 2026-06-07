@@ -33,14 +33,27 @@ jobs:
 
     - name: Run Build Script
       run: |
+        # ၁။ Android 14 Source Code များကို ဆွဲယူခြင်း
         python get_source.py --tags android-14.0.0_r50
-        # aapt2 ဖိုင် အမှန်တကယ်ထွက်လာစေရန် ဤနေရာတွင် မပျက်မကွက် Build ခိုင်းရပါမည်
-        python build.py --ndk=$ANDROID_NDK_ROOT --abi=arm64-v8a
+        
+        # ၂။ aapt2 ကို build ရန် လိုအပ်သော Host protoc compiler ကို အရင်ဆောက်ခြင်း
+        cd src/protobuf && mkdir build && cd build
+        cmake -GNinja -Dprotobuf_BUILD_TESTS=OFF ..
+        ninja protoc
+        cd ../../..
+        
+        # ၃။ NDK ကိုအသုံးပြုပြီး aapt2 အား Android Architecture (arm64-v8a) အတွက် တည်ဆောက်ခြင်း
+        python build.py \
+          --ndk=$ANDROID_NDK_ROOT \
+          --abi=arm64-v8a \
+          --build=build/aarch64 \
+          --protoc=$(pwd)/src/protobuf/build/protoc \
+          --target=aapt2
 
     - name: Upload AAPT2 Executable
       uses: actions/upload-artifact@v4
       with:
         name: aapt2-android14
         path: |
-          build/build-tools/aapt2
+          build/aarch64/build-tools/aapt2
           pack/
